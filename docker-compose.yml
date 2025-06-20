@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -30,15 +32,17 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
 
   backtester:
-      build:
-        context: .
-        dockerfile: backtester.Dockerfile
-      depends_on:
-        - kafka
-      environment:
-        KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+    build:
+      context: .
+      dockerfile: backtester.Dockerfile
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
