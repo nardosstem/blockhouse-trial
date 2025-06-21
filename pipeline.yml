@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deploy Blockhouse trial pipeline on one EC2 instance with Docker-Compose
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t3.small
+    Description: EC2 instance type (≥2 GB RAM for Kafka + ZK + producer)
+  GitHubRepo:
+    Type: String
+    Default: https://github.com/nardosstem/blockhouse-trial.git
+
+Resources:
+  PipelineSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow SSH and Kafka"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 9092
+          ToPort: 9092
+          CidrIp: 0.0.0.0/0
+
+  PipelineInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+        - !Ref PipelineSecurityGroup
+      ImageId: ami-08f3d892de259504d
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          # Install Docker, Git & Compose plugin on Amazon Linux
+          sudo yum update -y
+          sudo yum install -y docker git jq
+          sudo yum install -y docker-compose-plugin || true
+          sudo systemctl enable --now docker
+          sudo usermod -aG docker ec2-user
+          su - ec2-user -c "
+            git clone ${GitHubRepo} ~/blockhouse-trial
+            cd ~/blockhouse-trial/docker
+            docker compose up --build -d
+          "
+
+Outputs:
+  InstancePublicIP:
+    Description: "Public IP of the EC2 instance"
+    Value: !GetAtt PipelineInstance.PublicIp
