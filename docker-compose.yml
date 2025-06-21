@@ -21,6 +21,9 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_HEAP_OPTS: "-Xms128M -Xmx256M"
+      KAFKA_JVM_PERFORMANCE_OPTS: "-XX:MaxMetaspaceSize=64M -XX:+DisableExplicitGC -XX:+UseG1GC"
+
     healthcheck:
       test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/9092"]
       interval: 5s
