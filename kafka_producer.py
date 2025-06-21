@@ -46,8 +46,8 @@ def kafka_messages(records, topic, servers):
 
     producer = KafkaProducer(
         bootstrap_servers=[servers],
-        value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-        api_version=(0, 10, 1)
+        api_version=(0,11,5),
+        value_serializer=lambda v: json.dumps(v).encode('utf-8')
     )
     
     previous_ts = None
